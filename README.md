@@ -1,1 +1,0 @@
-# mirror-maker-mesos
