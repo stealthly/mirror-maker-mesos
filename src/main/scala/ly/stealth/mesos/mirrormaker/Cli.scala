@@ -1,25 +1,15 @@
 package ly.stealth.mesos.mirrormaker
 
 import java.io.{File, PrintStream}
-import java.net.URL
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.scala.DefaultScalaModule
-import com.twitter.finagle.Httpx
-import com.twitter.finagle.httpx.Version.Http11
-import com.twitter.io.Buf.ByteArray.Owned
-import com.twitter.io.Reader
 import com.twitter.util.Await
+import ly.stealth.mesos.mirrormaker.Util.?
 import scopt.Read
-import com.twitter.finagle.httpx
-import Util.?
 
 object Cli {
   val DefaultTaskCpus = 0.2
   val DefaultTaskMem = 256D
   val ApiEnvName = "MMM_API"
-
-  implicit val objectMapper: ObjectMapper = new ObjectMapper().registerModule(DefaultScalaModule)
 
   private val out: PrintStream = System.out
 
@@ -70,26 +60,13 @@ object Cli {
       .getOrElse(throw new CliError("Undefined API url. Either define cli option " +
       s"with --api or set an environment variable $ApiEnvName"))
 
-
-  private def extractAuthorityFileHost(urlStr: String): (String, String, String) = {
-    val url = new URL(urlStr)
-    (url.getAuthority, url.getFile, url.getHost)
-  }
-
   def handleStatus(restApiOpt: Option[String]) {
     val restApi = resolveRestApi(restApiOpt)
     printLine(s"Resolved REST API HTTP Server address to: $restApi")
 
-    val (authority, file, host) = extractAuthorityFileHost(restApi)
+    val restClient = new RestClient(restApi)
 
-    val client = Httpx.newService(authority)
-
-    val request = httpx.Request(httpx.Method.Get, file + "/status")
-    request.host = host
-    val response = client(request)
-
-    val apiResponseStr = Await.result(response).contentString
-    val apiResponse = objectMapper.readValue(apiResponseStr, classOf[ApiResponse])
+    val apiResponse = Await.result(restClient.status())
 
     apiResponse.value match {
       case Some(cluster) =>
@@ -125,20 +102,10 @@ object Cli {
     val restApi = resolveRestApi(restApiOpt)
     printLine(s"Resolved REST API HTTP Server address to: $restApi")
 
-    val (authority, file, host) = extractAuthorityFileHost(restApi)
-
-    val client = Httpx.newService(authority)
+    val restClient = new RestClient(restApi)
 
     val addServersRequest = AddServersRequest(numOfTasks, cpus.getOrElse(DefaultTaskCpus), mem.getOrElse(DefaultTaskMem))
-    val data = Reader.fromBuf(Owned(objectMapper.writeValueAsBytes(addServersRequest)))
-
-    val request = httpx.Request(Http11, httpx.Method.Post, file + "/add", data)
-    request.host = host
-
-    val response = client(request)
-
-    val apiResponseStr = Await.result(response).contentString
-    val apiResponse = objectMapper.readValue(apiResponseStr, classOf[ApiResponse])
+    val apiResponse = Await.result(restClient.add(addServersRequest))
 
     if (apiResponse.success)
       printLine(s"Added $numOfTasks tasks successfully.")
@@ -155,20 +122,10 @@ object Cli {
     val restApi = resolveRestApi(restApiOpt)
     printLine(s"Resolved REST API HTTP Server address to: $restApi")
 
-    val (authority, file, host) = extractAuthorityFileHost(restApi)
-
-    val client = Httpx.newService(authority)
+    val restClient = new RestClient(restApi)
 
     val deleteServersRequest = DeleteServersRequest(ids)
-    val data = Reader.fromBuf(Owned(objectMapper.writeValueAsBytes(deleteServersRequest)))
-
-    val request = httpx.Request(Http11, httpx.Method.Post, file + "/delete", data)
-    request.host = host
-
-    val response = client(request)
-
-    val apiResponseStr = Await.result(response).contentString
-    val apiResponse = objectMapper.readValue(apiResponseStr, classOf[ApiResponse])
+    val apiResponse = Await.result(restClient.delete(deleteServersRequest))
 
     if (apiResponse.success)
       printLine(s"Delete servers request (ids=${ids.mkString(",")}) was sent successfully.")
