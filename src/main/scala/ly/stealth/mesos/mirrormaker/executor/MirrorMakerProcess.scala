@@ -1,7 +1,6 @@
 package ly.stealth.mesos.mirrormaker.executor
 
 import java.util.Properties
-import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.{CountDownLatch, TimeUnit}
 
 import ly.stealth.mesos.mirrormaker.Util
@@ -16,7 +15,6 @@ class MirrorMakerProcess(mesosTaskStartedCallback: () => Unit) {
 
   val logger: Logger = Logger.getLogger(this.getClass)
 
-  private val numDroppedMessages = new AtomicInteger(0)
   @volatile private var exitingOnSendFailure: Boolean = false
   private var producer: MirrorMakerProducer = null
   private val shutdownLatch: CountDownLatch = new CountDownLatch(1)
@@ -138,7 +136,6 @@ class MirrorMakerProcess(mesosTaskStartedCallback: () => Unit) {
           exitingOnSendFailure = true
           producer.close(0)
         }
-        numDroppedMessages.incrementAndGet()
       }
     }
   }

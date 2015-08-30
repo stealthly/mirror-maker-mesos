@@ -22,7 +22,7 @@ class RestClient(baseUrl: String) {
 
   private val StatusPath = "status"
   private val AddPath = "add"
-  private val DeletePath = "add"
+  private val DeletePath = "delete"
 
   implicit val objectMapper: ObjectMapper = new ObjectMapper().registerModule(DefaultScalaModule)
 

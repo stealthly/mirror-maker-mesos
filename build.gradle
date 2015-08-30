@@ -36,6 +36,7 @@ dependencies {
 
 jar {
     // dependsOn 'test'
+    from "config/mmm-log4j.properties"
     doFirst {
         from(configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }) {
             exclude "*"

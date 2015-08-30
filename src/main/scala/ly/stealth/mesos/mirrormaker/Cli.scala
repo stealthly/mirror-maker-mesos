@@ -223,7 +223,7 @@ object Cli {
     cmd("delete").text("Stop and remove mirror maker instances by id").action { (_, c) =>
       DeleteOpts()
     }.children(
-        arg[Long]("<task-id>").unbounded().text("Task id - can be checked from the 'status' command").action { (value, opts) =>
+        arg[Long]("<task-id>").unbounded().text("Task id - can be checked from the 'status' command. Accepts multiple occurrences of this option.").action { (value, opts) =>
           opts.asInstanceOf[DeleteOpts].copy(ids = opts.asInstanceOf[DeleteOpts].ids :+ value)
         },
 
