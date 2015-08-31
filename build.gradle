@@ -1,0 +1,50 @@
+apply plugin: 'scala'
+apply plugin: 'idea'
+
+version = '0.1'
+
+jar.archiveName = "mmm-${version}-SNAPSHOT.jar"
+
+repositories {
+    mavenCentral()
+    mavenLocal()
+    maven {
+        url "https://oss.sonatype.org/content/repositories/snapshots"
+    }
+}
+
+buildDir = 'out/gradle'
+libsDirName = '../../'
+
+sourceSets {
+    main {
+        scala { srcDirs = ['src/main/scala'] }
+    }
+}
+
+dependencies {
+    compile "org.scala-lang:scala-library:2.11.7"
+    compile "org.apache.mesos:mesos:0.21.1"
+    compile "com.github.finagle:finch-core_2.11:0.8.0"
+    compile "com.github.finagle:finch-jackson_2.11:0.8.0"
+    compile 'com.github.scopt:scopt_2.11:3.3.0'
+    compile 'org.apache.kafka:kafka-clients:0.8.3-SNAPSHOT'
+    compile 'com.twitter:finagle-httpx_2.11:6.27.0'
+
+    compile "log4j:log4j:1.2.16"
+}
+
+jar {
+    // dependsOn 'test'
+    from "config/mmm-log4j.properties"
+    doFirst {
+        from(configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }) {
+            exclude "*"
+            exclude "about_files/*"
+            exclude "META-INF/*.SF"
+            exclude "META-INF/*.DSA"
+            exclude "META-INF/*.RSA"
+        }
+    }
+    manifest.attributes("Main-Class": "ly.stealth.mesos.mirrormaker.Cli")
+}
