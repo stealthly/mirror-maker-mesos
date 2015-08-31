@@ -40,7 +40,7 @@ class MirrorMakerProcess(mesosTaskStartedCallback: () => Unit) {
     var consumer: KafkaConsumer[Array[Byte], Array[Byte]] = null
     try {
       consumer = new KafkaConsumer[Array[Byte], Array[Byte]](Util.mapTopProp(consumerProps))
-      consumer.subscribe(topics: _*)
+      consumer.subscribe(topics.asJava)
 
       producer = new MirrorMakerProducer(abortOnSendFailure = true, Util.mapTopProp(producerProps))
 
